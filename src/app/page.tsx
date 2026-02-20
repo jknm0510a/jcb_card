@@ -85,6 +85,28 @@ export default function Dashboard() {
     }
   };
 
+  const handleUpdateCard = async (id: number, updates: Partial<Card>) => {
+    try {
+      const res = await fetch(`/api/cards/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setCards(cards.map((c) => (c.id === id ? data.card : c)));
+      } else {
+        alert('更新失敗');
+      }
+    } catch (error) {
+      console.error('Failed to update card', error);
+      alert('發生錯誤');
+    }
+  };
+
   if (isLoading) return <div className="container text-center mt-4">載入中...</div>;
 
   return (
@@ -122,39 +144,135 @@ export default function Dashboard() {
               <div key={card.id} className="card" style={{ ...cardStyle, position: 'relative' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
                   <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{card.name}</h3>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <Link
+                      href={`/edit/${card.id}`}
+                      style={{
+                        fontSize: '1.2rem',
+                        textDecoration: 'none',
+                        padding: '0 0.5rem',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        lineHeight: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title="修改"
+                    >
+                      <svg viewBox="0 0 512 512" style={{ width: '1em', height: '1em', fill: '#ecc94b' }}>
+                        <path d="M441 58.9L453.1 71c9.4 9.4 9.4 24.6 0 33.9L424 134.1 377.9 88 407 58.9c9.4-9.4 24.6-9.4 33.9 0zM209.8 256.2L344 121.9 390.1 168 255.8 302.2c-2.9 2.9-6.5 5-10.4 6.1l-58.5 16.7 16.7-58.5c1.1-3.9 3.2-7.5 6.1-10.4zM373.1 25L175.8 222.2c-8.7 8.7-15 19.4-18.3 31.1l-28.6 100c-2.4 8.4-.1 17.4 6.1 23.6s15.2 8.5 23.6 6.1l100-28.6c11.8-3.4 22.5-9.7 31.1-18.3L487 138.9c28.1-28.1 28.1-73.7 0-101.8L474.9 25C446.8-3.1 401.2-3.1 373.1 25zM88 64C39.4 64 0 103.4 0 152V424c0 48.6 39.4 88 88 88H360c48.6 0 88-39.4 88-88V312c0-13.3-10.7-24-24-24s-24 10.7-24 24V424c0 22.1-17.9 40-40 40H88c-22.1 0-40-17.9-40-40V152c0-22.1 17.9-40 40-40H200c13.3 0 24-10.7 24-24s-10.7-24-24-24H88z" />
+                      </svg>
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(card.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#e53e3e',
+                        fontSize: '1.5rem',
+                        lineHeight: 1,
+                        cursor: 'pointer',
+                        padding: '0 0.5rem',
+                      }}
+                      title="刪除"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
+                  <div>
+                    <p style={{ color: '#4a5568', fontSize: '0.9rem', marginBottom: '0.25rem' }}>悠遊卡餘額</p>
+                    <p style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>${card.balance}</p>
+                  </div>
                   <button
-                    onClick={() => handleDelete(card.id)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#e53e3e',
-                      fontSize: '1.5rem',
-                      lineHeight: 1,
-                      cursor: 'pointer',
-                      padding: '0 0.5rem',
+                    onClick={() => {
+                      const newBalanceStr = window.prompt(`修改「${card.name}」的餘額`, card.balance.toString());
+                      if (newBalanceStr !== null) {
+                        const newBalance = parseInt(newBalanceStr, 10);
+                        if (!isNaN(newBalance) && newBalance >= 0) {
+                          handleUpdateCard(card.id, { balance: newBalance });
+                        } else {
+                          alert('請輸入有效的數字');
+                        }
+                      }
                     }}
-                    title="刪除"
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid #cbd5e0',
+                      borderRadius: '4px',
+                      padding: '0.25rem 0.5rem',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      color: '#4a5568',
+                    }}
+                    title="修改餘額"
                   >
-                    &times;
+                    ✏️ 編輯
                   </button>
                 </div>
 
-                <div style={{ marginBottom: '1rem' }}>
-                  <p style={{ color: '#4a5568', fontSize: '0.9rem' }}>餘額</p>
-                  <p style={{ fontSize: '1.5rem', fontWeight: 600 }}>${card.balance}</p>
-                </div>
-
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.9rem' }}>
-                  <div style={{ padding: '0.5rem', background: card.monthlyRefreshed ? '#c6f6d5' : '#fed7d7', borderRadius: '4px', textAlign: 'center', color: card.monthlyRefreshed ? '#22543d' : '#822727' }}>
+                  <button
+                    onClick={() => handleUpdateCard(card.id, { monthlyRefreshed: !card.monthlyRefreshed })}
+                    style={{
+                      padding: '0.5rem',
+                      background: card.monthlyRefreshed ? '#c6f6d5' : '#fed7d7',
+                      borderRadius: '4px',
+                      textAlign: 'center',
+                      color: card.monthlyRefreshed ? '#22543d' : '#822727',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                    }}
+                  >
                     {card.monthlyRefreshed ? '已登錄本月' : '未登錄本月'}
-                  </div>
-                  <div style={{ padding: '0.5rem', background: card.monthlyConsumed ? '#c6f6d5' : '#fed7d7', borderRadius: '4px', textAlign: 'center', color: card.monthlyConsumed ? '#22543d' : '#822727' }}>
+                  </button>
+                  <button
+                    onClick={() => handleUpdateCard(card.id, { monthlyConsumed: !card.monthlyConsumed })}
+                    style={{
+                      padding: '0.5rem',
+                      background: card.monthlyConsumed ? '#c6f6d5' : '#fed7d7',
+                      borderRadius: '4px',
+                      textAlign: 'center',
+                      color: card.monthlyConsumed ? '#22543d' : '#822727',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                    }}
+                  >
                     {card.monthlyConsumed ? '已完成自動加值' : '未完成自動加值'}
-                  </div>
+                  </button>
                 </div>
 
-                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--secondary)', fontSize: '0.9rem', color: '#718096', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>年度次數: {card.annualCount} / 3</span>
+                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--secondary)', fontSize: '0.9rem', color: '#718096', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span>年度次數: {card.annualCount} / 3</span>
+                    {!isMaxedOut && (
+                      <button
+                        onClick={() => handleUpdateCard(card.id, {
+                          annualCount: card.annualCount + 1,
+                          monthlyRefreshed: false,
+                          monthlyConsumed: false,
+                        })}
+                        style={{
+                          background: '#ebf8ff',
+                          color: '#3182ce',
+                          border: '1px solid #bee3f8',
+                          borderRadius: '4px',
+                          padding: '0.1rem 0.4rem',
+                          cursor: 'pointer',
+                          fontSize: '0.8rem',
+                          fontWeight: 'bold'
+                        }}
+                        title="增加一次年度登錄並重置本月狀態"
+                      >
+                        +1
+                      </button>
+                    )}
+                  </div>
                   {isMaxedOut && <span style={{ color: '#e53e3e', fontWeight: 600 }}>已達上限</span>}
                 </div>
               </div>

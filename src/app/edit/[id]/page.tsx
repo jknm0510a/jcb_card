@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -14,7 +14,8 @@ const COMMON_CARDS = [
     '遠東JCB悠遊信用卡',
 ];
 
-export default function AddCardPage() {
+export default function EditCardPage({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = use(params);
     const router = useRouter();
     const [formData, setFormData] = useState({
         name: '',
@@ -24,23 +25,74 @@ export default function AddCardPage() {
         annualCount: '',
     });
     const [isLoading, setIsLoading] = useState(false);
+    const [isFetching, setIsFetching] = useState(true);
+
+    useEffect(() => {
+        const fetchInitialCard = async () => {
+            try {
+                // Since our API currently doesn't have a single GET endpoint other than the list,
+                // we'll fetch the list and isolate the card we're editing.
+                const res = await fetch('/api/cards');
+                if (res.status === 401) {
+                    router.push('/login');
+                    return;
+                }
+                const data = await res.json();
+
+                if (data.cards) {
+                    const existingCard = data.cards.find((c: any) => c.id === parseInt(resolvedParams.id));
+                    if (existingCard) {
+                        setFormData({
+                            name: existingCard.name,
+                            balance: existingCard.balance.toString(),
+                            monthlyRefreshed: existingCard.monthlyRefreshed,
+                            monthlyConsumed: existingCard.monthlyConsumed,
+                            annualCount: existingCard.annualCount.toString(),
+                        });
+                    } else {
+                        alert('找不到該卡片資料');
+                        router.push('/');
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load card details', error);
+                alert('無法載入卡片資料');
+            } finally {
+                setIsFetching(false);
+            }
+        };
+
+        fetchInitialCard();
+    }, [resolvedParams.id, router]);
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!confirm('確認要修改卡片資料嗎？')) {
+            return;
+        }
+
         setIsLoading(true);
 
         try {
-            const res = await fetch('/api/cards', {
-                method: 'POST',
+            const res = await fetch(`/api/cards/${resolvedParams.id}`, {
+                method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    name: formData.name,
+                    balance: parseInt(formData.balance) || 0,
+                    monthlyRefreshed: formData.monthlyRefreshed,
+                    monthlyConsumed: formData.monthlyConsumed,
+                    annualCount: parseInt(formData.annualCount) || 0,
+                }),
             });
 
             if (res.ok) {
                 router.push('/');
                 router.refresh();
             } else {
-                alert('新增失敗');
+                alert('修改失敗');
             }
         } catch (error) {
             console.error(error);
@@ -50,10 +102,14 @@ export default function AddCardPage() {
         }
     };
 
+    if (isFetching) {
+        return <div className="container text-center mt-4">載入中...</div>;
+    }
+
     return (
-        <div className="container" style={{ maxWidth: '600px', marginTop: '2rem' }}>
+        <div className="container" style={{ maxWidth: '600px', margin: '2rem auto' }}>
             <div className="card">
-                <h1 className="mb-4 text-center">新增 JCB 卡片</h1>
+                <h1 className="mb-4 text-center">修改 JCB 卡片</h1>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>卡片名稱</label>
@@ -83,7 +139,7 @@ export default function AddCardPage() {
                         />
                     </div>
 
-                    <div className="mb-4" style={{ display: 'flex', gap: '2rem' }}>
+                    <div className="mb-4" style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
                         <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                             <input
                                 type="checkbox"
@@ -126,7 +182,7 @@ export default function AddCardPage() {
                             取消
                         </Link>
                         <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={isLoading}>
-                            {isLoading ? '新增中...' : '確認新增'}
+                            {isLoading ? '儲存中...' : '確認修改'}
                         </button>
                     </div>
                 </form>
