@@ -13,13 +13,40 @@ interface Card {
   annualCount: number;
 }
 
+const getNextRegistrationTime = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-based
+
+  // Potential upcoming slots within the current month
+  const targetDates = [
+    new Date(year, month, 1, 9, 0, 0),
+    new Date(year, month, 11, 9, 0, 0),
+    new Date(year, month, 21, 9, 0, 0),
+    // And the first slot of the NEXT month
+    new Date(year, month + 1, 1, 9, 0, 0),
+  ];
+
+  // Find the first slot that is strictly greater than `now`
+  const nextTarget = targetDates.find((date) => date > now);
+
+  if (!nextTarget) {
+    // Should never reach here due to the next month's 1st being included, but fallback
+    return new Date(year, month + 1, 1, 9, 0, 0);
+  }
+
+  return nextTarget;
+};
+
 export default function Dashboard() {
   const [cards, setCards] = useState<Card[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [nextRegTime, setNextRegTime] = useState<Date | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     fetchCards();
+    setNextRegTime(getNextRegistrationTime());
   }, []);
 
   const fetchCards = async () => {
@@ -62,12 +89,18 @@ export default function Dashboard() {
 
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h1>我的 JCB 卡片</h1>
         <Link href="/add" className="btn btn-primary">
           + 新增卡片
         </Link>
       </div>
+
+      {nextRegTime && (
+        <div style={{ background: '#ebf8ff', color: '#2b6cb0', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', textAlign: 'center', fontWeight: 'bold' }}>
+          下次搶登錄時間為 {nextRegTime.getFullYear()}年{nextRegTime.getMonth() + 1}月{nextRegTime.getDate()}日09時00分
+        </div>
+      )}
 
       {cards.length === 0 ? (
         <div className="card text-center" style={{ padding: '3rem' }}>
@@ -79,7 +112,7 @@ export default function Dashboard() {
       ) : (
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
           {cards.map((card) => {
-            const isMaxedOut = card.annualCount >= 3;
+            const isMaxedOut = card.monthlyRefreshed && card.monthlyConsumed && card.annualCount >= 3;
             // Style for maxed out cards: grayed out
             const cardStyle = isMaxedOut
               ? { opacity: 0.6, filter: 'grayscale(100%)' }
@@ -116,7 +149,7 @@ export default function Dashboard() {
                     {card.monthlyRefreshed ? '已登錄本月' : '未登錄本月'}
                   </div>
                   <div style={{ padding: '0.5rem', background: card.monthlyConsumed ? '#c6f6d5' : '#fed7d7', borderRadius: '4px', textAlign: 'center', color: card.monthlyConsumed ? '#22543d' : '#822727' }}>
-                    {card.monthlyConsumed ? '已完成消費' : '未完成消費'}
+                    {card.monthlyConsumed ? '已完成自動加值' : '未完成自動加值'}
                   </div>
                 </div>
 
