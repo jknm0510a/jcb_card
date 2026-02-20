@@ -27,3 +27,9 @@ model Card {
   userId          Int
   user            User     @relation(fields: [userId], references: [id])
 }
+
+model CardTemplate {
+  id        Int      @id @default(autoincrement())
+  bankName  String
+  cardName  String
+}

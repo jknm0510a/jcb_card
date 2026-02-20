@@ -4,15 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-const COMMON_CARDS = [
-    '玉山JCB悠遊信用卡',
-    '富邦JCB悠遊信用卡',
-    '聯邦JCB悠遊信用卡',
-    '中信JCB悠遊信用卡',
-    '國泰JCB悠遊信用卡',
-    '永豐JCB悠遊信用卡',
-    '遠東JCB悠遊信用卡',
-];
+
 
 export default function EditCardPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params);
@@ -26,6 +18,7 @@ export default function EditCardPage({ params }: { params: Promise<{ id: string 
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(true);
+    const [cardTemplates, setCardTemplates] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchInitialCard = async () => {
@@ -62,7 +55,22 @@ export default function EditCardPage({ params }: { params: Promise<{ id: string 
             }
         };
 
+        const fetchTemplates = async () => {
+            try {
+                const res = await fetch('/api/card-templates');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.templates) {
+                        setCardTemplates(data.templates);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch card templates', error);
+            }
+        };
+
         fetchInitialCard();
+        fetchTemplates();
     }, [resolvedParams.id, router]);
 
 
@@ -122,7 +130,7 @@ export default function EditCardPage({ params }: { params: Promise<{ id: string 
                             style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--secondary)' }}
                         />
                         <datalist id="card-list">
-                            {COMMON_CARDS.map((card) => (
+                            {cardTemplates.map((card) => (
                                 <option key={card} value={card} />
                             ))}
                         </datalist>
