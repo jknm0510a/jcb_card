@@ -19,6 +19,7 @@ export default function EditCardPage({ params }: { params: Promise<{ id: string 
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(true);
     const [cardTemplates, setCardTemplates] = useState<string[]>([]);
+    const [showDropdown, setShowDropdown] = useState(false);
 
     useEffect(() => {
         const fetchInitialCard = async () => {
@@ -119,21 +120,60 @@ export default function EditCardPage({ params }: { params: Promise<{ id: string 
             <div className="card">
                 <h1 className="mb-4 text-center">修改 JCB 卡片</h1>
                 <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
+                    <div className="mb-4" style={{ position: 'relative' }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>卡片名稱</label>
                         <input
-                            list="card-list"
+                            type="text"
                             value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            onChange={(e) => {
+                                setFormData({ ...formData, name: e.target.value });
+                                setShowDropdown(true);
+                            }}
+                            onFocus={() => setShowDropdown(true)}
+                            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                             placeholder="輸入或選擇卡片名稱"
                             required
                             style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--secondary)' }}
                         />
-                        <datalist id="card-list">
-                            {cardTemplates.map((card) => (
-                                <option key={card} value={card} />
-                            ))}
-                        </datalist>
+                        {showDropdown && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                right: 0,
+                                zIndex: 10,
+                                background: 'white',
+                                border: '1px solid var(--secondary)',
+                                borderRadius: '4px',
+                                maxHeight: '200px',
+                                overflowY: 'auto',
+                                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                                marginTop: '2px'
+                            }}>
+                                {cardTemplates
+                                    .filter(card => card.toLowerCase().includes(formData.name.toLowerCase()))
+                                    .map((card) => (
+                                        <div
+                                            key={card}
+                                            onClick={() => {
+                                                setFormData({ ...formData, name: card });
+                                                setShowDropdown(false);
+                                            }}
+                                            style={{
+                                                padding: '0.5rem',
+                                                cursor: 'pointer',
+                                                borderBottom: '1px solid #eee'
+                                            }}
+                                            onMouseDown={(e) => e.preventDefault()}
+                                        >
+                                            {card}
+                                        </div>
+                                    ))}
+                                {cardTemplates.filter(card => card.toLowerCase().includes(formData.name.toLowerCase())).length === 0 && (
+                                    <div style={{ padding: '0.5rem', color: '#a0aec0' }}>找不到符合的卡片</div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <div className="mb-4">
