@@ -107,15 +107,42 @@ export default function Dashboard() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const res = await fetch('/api/auth/logout', { method: 'POST' });
+      if (res.ok) {
+        router.push('/login');
+      } else {
+        alert('登出失敗');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      alert('發生錯誤');
+    }
+  };
+
   if (isLoading) return <div className="container text-center mt-4">載入中...</div>;
 
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1>我的 JCB 卡片</h1>
-        <Link href="/add" className="btn btn-primary">
-          + 新增卡片
-        </Link>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <h1 style={{ margin: 0 }}>我的 JCB 卡片</h1>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Link href="/add" className="btn btn-primary" style={{ whiteSpace: 'nowrap' }}>
+            + 新增卡片
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="btn btn-secondary"
+            style={{
+              background: '#e2e8f0',
+              color: '#4a5568',
+              border: '1px solid #cbd5e0'
+            }}
+          >
+            登出
+          </button>
+        </div>
       </div>
 
       {nextRegTime && (
