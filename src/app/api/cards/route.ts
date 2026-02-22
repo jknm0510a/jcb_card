@@ -37,15 +37,16 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { name, balance, monthlyRefreshed, monthlyConsumed, annualCount } = body;
+        const { bankName, cardName, balance, monthlyRefreshed, monthlyConsumed, annualCount } = body;
 
-        if (!name) {
-            return NextResponse.json({ error: 'Card name is required' }, { status: 400 });
+        if (!bankName || !cardName) {
+            return NextResponse.json({ error: 'Bank name and Card name are required' }, { status: 400 });
         }
 
         const card = await prisma.card.create({
             data: {
-                name,
+                bankName,
+                cardName,
                 balance: parseInt(balance) || 0,
                 monthlyRefreshed: !!monthlyRefreshed,
                 monthlyConsumed: !!monthlyConsumed,

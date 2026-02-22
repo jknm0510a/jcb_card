@@ -70,6 +70,8 @@ export async function PATCH(
         const updatedCard = await prisma.card.update({
             where: { id: parseInt(id) },
             data: {
+                ...(body.bankName !== undefined && { bankName: body.bankName }),
+                ...(body.cardName !== undefined && { cardName: body.cardName }),
                 ...(body.monthlyRefreshed !== undefined && { monthlyRefreshed: body.monthlyRefreshed }),
                 ...(body.monthlyConsumed !== undefined && { monthlyConsumed: body.monthlyConsumed }),
                 ...(body.annualCount !== undefined && { annualCount: body.annualCount }),

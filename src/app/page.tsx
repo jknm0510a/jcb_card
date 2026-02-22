@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 
 interface Card {
   id: number;
-  name: string;
+  bankName: string;
+  cardName: string;
   balance: number;
   monthlyRefreshed: boolean;
   monthlyConsumed: boolean;
@@ -170,7 +171,7 @@ export default function Dashboard() {
             return (
               <div key={card.id} className="card" style={{ ...cardStyle, position: 'relative' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{card.name}</h3>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{card.bankName} - {card.cardName}</h3>
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <Link
                       href={`/edit/${card.id}`}
@@ -216,7 +217,7 @@ export default function Dashboard() {
                   </div>
                   <button
                     onClick={() => {
-                      const newBalanceStr = window.prompt(`修改「${card.name}」的餘額`, card.balance.toString());
+                      const newBalanceStr = window.prompt(`修改「${card.bankName} - ${card.cardName}」的餘額`, card.balance.toString());
                       if (newBalanceStr !== null) {
                         const newBalance = parseInt(newBalanceStr, 10);
                         if (!isNaN(newBalance) && newBalance >= 0) {

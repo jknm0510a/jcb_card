@@ -12,11 +12,16 @@ export async function GET() {
             ]
         });
 
-        // Format to a simple array of strings for easiest backwards compatibility 
-        // with the current UI dropdowns (`[ '銀行 名稱', ... ]`).
-        const formattedTemplates = templates.map(t => `${t.bankName} - ${t.cardName}`);
+        // Group cards by bank
+        const groupedTemplates = templates.reduce((acc: { [key: string]: string[] }, curr) => {
+            if (!acc[curr.bankName]) {
+                acc[curr.bankName] = [];
+            }
+            acc[curr.bankName].push(curr.cardName);
+            return acc;
+        }, {});
 
-        return NextResponse.json({ templates: formattedTemplates });
+        return NextResponse.json({ templates: groupedTemplates });
     } catch (error) {
         console.error('Failed to fetch card templates:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

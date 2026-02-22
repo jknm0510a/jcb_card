@@ -9,15 +9,17 @@ import Link from 'next/link';
 export default function AddCardPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({
-        name: '',
+        bankName: '',
+        cardName: '',
         balance: '',
         monthlyRefreshed: false,
         monthlyConsumed: false,
         annualCount: '',
     });
     const [isLoading, setIsLoading] = useState(false);
-    const [cardTemplates, setCardTemplates] = useState<string[]>([]);
-    const [showDropdown, setShowDropdown] = useState(false);
+    const [cardTemplates, setCardTemplates] = useState<{ [key: string]: string[] }>({});
+    const [showBankDropdown, setShowBankDropdown] = useState(false);
+    const [showCardDropdown, setShowCardDropdown] = useState(false);
 
     // Fetch card templates on mount
     useEffect(() => {
@@ -62,27 +64,30 @@ export default function AddCardPage() {
         }
     };
 
+    const availableBanks = Object.keys(cardTemplates);
+    const availableCards = formData.bankName && cardTemplates[formData.bankName] ? cardTemplates[formData.bankName] : [];
+
     return (
         <div className="container" style={{ maxWidth: '600px', marginTop: '2rem' }}>
             <div className="card">
                 <h1 className="mb-4 text-center">新增 JCB 卡片</h1>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4" style={{ position: 'relative' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>卡片名稱</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>銀行名稱</label>
                         <input
                             type="text"
-                            value={formData.name}
+                            value={formData.bankName}
                             onChange={(e) => {
-                                setFormData({ ...formData, name: e.target.value });
-                                setShowDropdown(true);
+                                setFormData({ ...formData, bankName: e.target.value, cardName: '' });
+                                setShowBankDropdown(true);
                             }}
-                            onFocus={() => setShowDropdown(true)}
-                            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                            placeholder="輸入或選擇卡片名稱"
+                            onFocus={() => setShowBankDropdown(true)}
+                            onBlur={() => setTimeout(() => setShowBankDropdown(false), 200)}
+                            placeholder="輸入或選擇銀行名稱"
                             required
                             style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--secondary)' }}
                         />
-                        {showDropdown && (
+                        {showBankDropdown && (
                             <div style={{
                                 position: 'absolute',
                                 top: '100%',
@@ -97,26 +102,82 @@ export default function AddCardPage() {
                                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                                 marginTop: '2px'
                             }}>
-                                {cardTemplates
-                                    .filter(card => card.toLowerCase().includes(formData.name.toLowerCase()))
-                                    .map((card) => (
+                                {availableBanks
+                                    .filter(bank => bank.toLowerCase().includes(formData.bankName.toLowerCase()))
+                                    .map((bank) => (
                                         <div
-                                            key={card}
+                                            key={bank}
                                             onClick={() => {
-                                                setFormData({ ...formData, name: card });
-                                                setShowDropdown(false);
+                                                setFormData({ ...formData, bankName: bank, cardName: '' });
+                                                setShowBankDropdown(false);
                                             }}
                                             style={{
                                                 padding: '0.5rem',
                                                 cursor: 'pointer',
                                                 borderBottom: '1px solid #eee'
                                             }}
-                                            onMouseDown={(e) => e.preventDefault()} // Prevents input blur before click registers
+                                            onMouseDown={(e) => e.preventDefault()}
+                                        >
+                                            {bank}
+                                        </div>
+                                    ))}
+                                {availableBanks.filter(bank => bank.toLowerCase().includes(formData.bankName.toLowerCase())).length === 0 && (
+                                    <div style={{ padding: '0.5rem', color: '#a0aec0' }}>找不到符合的銀行</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mb-4" style={{ position: 'relative' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>卡片名稱</label>
+                        <input
+                            type="text"
+                            value={formData.cardName}
+                            onChange={(e) => {
+                                setFormData({ ...formData, cardName: e.target.value });
+                                setShowCardDropdown(true);
+                            }}
+                            onFocus={() => setShowCardDropdown(true)}
+                            onBlur={() => setTimeout(() => setShowCardDropdown(false), 200)}
+                            placeholder="輸入或選擇卡片名稱"
+                            required
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--secondary)' }}
+                        />
+                        {showCardDropdown && formData.bankName && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                right: 0,
+                                zIndex: 10,
+                                background: 'white',
+                                border: '1px solid var(--secondary)',
+                                borderRadius: '4px',
+                                maxHeight: '200px',
+                                overflowY: 'auto',
+                                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                                marginTop: '2px'
+                            }}>
+                                {availableCards
+                                    .filter(card => card.toLowerCase().includes(formData.cardName.toLowerCase()))
+                                    .map((card) => (
+                                        <div
+                                            key={card}
+                                            onClick={() => {
+                                                setFormData({ ...formData, cardName: card });
+                                                setShowCardDropdown(false);
+                                            }}
+                                            style={{
+                                                padding: '0.5rem',
+                                                cursor: 'pointer',
+                                                borderBottom: '1px solid #eee'
+                                            }}
+                                            onMouseDown={(e) => e.preventDefault()}
                                         >
                                             {card}
                                         </div>
                                     ))}
-                                {cardTemplates.filter(card => card.toLowerCase().includes(formData.name.toLowerCase())).length === 0 && (
+                                {availableCards.filter(card => card.toLowerCase().includes(formData.cardName.toLowerCase())).length === 0 && (
                                     <div style={{ padding: '0.5rem', color: '#a0aec0' }}>找不到符合的卡片</div>
                                 )}
                             </div>

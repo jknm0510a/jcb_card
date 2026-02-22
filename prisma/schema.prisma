@@ -17,7 +17,8 @@ model User {
 
 model Card {
   id              Int      @id @default(autoincrement())
-  name            String
+  bankName        String
+  cardName        String
   balance         Int      @default(0)
   monthlyRefreshed Boolean @default(false)
   monthlyConsumed Boolean @default(false)
