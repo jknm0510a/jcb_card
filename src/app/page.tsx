@@ -39,10 +39,28 @@ const getNextRegistrationTime = () => {
   return nextTarget;
 };
 
+interface FilterState {
+  bankName: string;
+  monthlyRefreshed: string; // 'all', 'yes', 'no'
+  monthlyConsumed: string; // 'all', 'yes', 'no'
+  annualCount: string; // 'all', '0', '1', '2', '3'
+}
+
+const initialFilterState: FilterState = {
+  bankName: 'all',
+  monthlyRefreshed: 'all',
+  monthlyConsumed: 'all',
+  annualCount: 'all',
+};
+
 export default function Dashboard() {
   const [cards, setCards] = useState<Card[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [nextRegTime, setNextRegTime] = useState<Date | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterState>(initialFilterState);
+  const [tempFilter, setTempFilter] = useState<FilterState>(initialFilterState);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -124,11 +142,64 @@ export default function Dashboard() {
 
   if (isLoading) return <div className="container text-center mt-4">載入中...</div>;
 
+  // Extract unique bank names from our cards for the filter dropdown
+  const uniqueBanks = Array.from(new Set(cards.map(c => c.bankName))).sort();
+
+  // Apply filters
+  const filteredCards = cards.filter(card => {
+    if (activeFilter.bankName !== 'all' && card.bankName !== activeFilter.bankName) return false;
+
+    if (activeFilter.monthlyRefreshed === 'yes' && !card.monthlyRefreshed) return false;
+    if (activeFilter.monthlyRefreshed === 'no' && card.monthlyRefreshed) return false;
+
+    if (activeFilter.monthlyConsumed === 'yes' && !card.monthlyConsumed) return false;
+    if (activeFilter.monthlyConsumed === 'no' && card.monthlyConsumed) return false;
+
+    if (activeFilter.annualCount !== 'all' && card.annualCount.toString() !== activeFilter.annualCount) return false;
+
+    return true;
+  });
+
+  const handleOpenFilter = () => {
+    setTempFilter(activeFilter);
+    setIsFilterOpen(true);
+  };
+
+  const handleCloseFilter = () => {
+    setIsFilterOpen(false);
+  };
+
+  const handleApplyFilter = () => {
+    setActiveFilter(tempFilter);
+    setIsFilterOpen(false);
+  };
+
+  const handleClearFilter = () => {
+    setTempFilter(initialFilterState);
+  };
+
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h1 style={{ margin: 0 }}>我的 JCB 卡片</h1>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            onClick={handleOpenFilter}
+            className="btn"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: 'white',
+              border: '1px solid var(--secondary)',
+              color: 'var(--primary)'
+            }}
+          >
+            <svg viewBox="0 0 512 512" style={{ width: '1em', height: '1em', fill: 'currentColor' }}>
+              <path d="M3.9 54.9C10.5 40.9 24.5 32 40 32H472c15.5 0 29.5 8.9 36.1 22.9s4.6 30.5-5.2 42.5L320 320.9V448c0 12.1-6.8 23.2-17.7 28.6s-23.8 4.3-33.5-3l-64-48c-8.1-6-12.8-15.5-12.8-25.6V320.9L9 97.3C-.7 85.4-2.8 68.8 3.9 54.9z" />
+            </svg>
+            篩選
+          </button>
           <Link href="/add" className="btn btn-primary" style={{ whiteSpace: 'nowrap' }}>
             + 新增卡片
           </Link>
@@ -146,6 +217,87 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {isFilterOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 100,
+          display: 'flex', justifyContent: 'center', alignItems: 'center'
+        }}>
+          <div className="card" style={{ width: '100%', maxWidth: '400px', margin: '1rem', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '1.5rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>篩選卡片</h2>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>銀行</label>
+              <select
+                value={tempFilter.bankName}
+                onChange={(e) => setTempFilter({ ...tempFilter, bankName: e.target.value })}
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--secondary)' }}
+              >
+                <option value="all">全部銀行</option>
+                {uniqueBanks.map(bank => (
+                  <option key={bank} value={bank}>{bank}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>本月已登錄回饋活動</label>
+              <select
+                value={tempFilter.monthlyRefreshed}
+                onChange={(e) => setTempFilter({ ...tempFilter, monthlyRefreshed: e.target.value })}
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--secondary)' }}
+              >
+                <option value="all">全部</option>
+                <option value="yes">是</option>
+                <option value="no">否</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>本月已完成自動加值</label>
+              <select
+                value={tempFilter.monthlyConsumed}
+                onChange={(e) => setTempFilter({ ...tempFilter, monthlyConsumed: e.target.value })}
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--secondary)' }}
+              >
+                <option value="all">全部</option>
+                <option value="yes">是</option>
+                <option value="no">否</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>年度次數</label>
+              <select
+                value={tempFilter.annualCount}
+                onChange={(e) => setTempFilter({ ...tempFilter, annualCount: e.target.value })}
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--secondary)' }}
+              >
+                <option value="all">全部</option>
+                <option value="0">0 次</option>
+                <option value="1">1 次</option>
+                <option value="2">2 次</option>
+                <option value="3">3 次 (已滿)</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={handleCloseFilter} className="btn" style={{ flex: 1, backgroundColor: '#e2e8f0', color: '#4a5568' }}>取消</button>
+                <button onClick={handleApplyFilter} className="btn btn-primary" style={{ flex: 1 }}>確定</button>
+              </div>
+              <button
+                onClick={handleClearFilter}
+                className="btn"
+                style={{ width: '100%', backgroundColor: 'transparent', border: '1px dashed #cbd5e0', color: '#718096', marginTop: '0.5rem' }}
+              >
+                清除所有篩選項
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {nextRegTime && (
         <div style={{ background: '#ebf8ff', color: '#2b6cb0', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', textAlign: 'center', fontWeight: 'bold' }}>
           下次搶登錄時間為 {nextRegTime.getFullYear()}年{nextRegTime.getMonth() + 1}月{nextRegTime.getDate()}日09時00分
@@ -159,9 +311,16 @@ export default function Dashboard() {
             立即新增第一張卡片
           </Link>
         </div>
+      ) : filteredCards.length === 0 ? (
+        <div className="card text-center" style={{ padding: '3rem' }}>
+          <p style={{ color: '#718096', marginBottom: '1rem' }}>沒有符合條件的卡片</p>
+          <button onClick={() => setActiveFilter(initialFilterState)} className="btn btn-primary">
+            清除所有篩選項
+          </button>
+        </div>
       ) : (
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-          {cards.map((card) => {
+          {filteredCards.map((card) => {
             const isMaxedOut = card.monthlyRefreshed && card.monthlyConsumed && card.annualCount >= 3;
             // Style for maxed out cards: grayed out
             const cardStyle = isMaxedOut
