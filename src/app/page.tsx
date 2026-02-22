@@ -403,7 +403,12 @@ export default function Dashboard() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.9rem' }}>
                   <button
-                    onClick={() => handleUpdateCard(card.id, { monthlyRefreshed: !card.monthlyRefreshed })}
+                    onClick={() => {
+                      if (!card.monthlyRefreshed) {
+                        handleUpdateCard(card.id, { monthlyRefreshed: true });
+                      }
+                    }}
+                    disabled={card.monthlyRefreshed}
                     style={{
                       padding: '0.5rem',
                       background: card.monthlyRefreshed ? '#c6f6d5' : '#fed7d7',
@@ -411,14 +416,20 @@ export default function Dashboard() {
                       textAlign: 'center',
                       color: card.monthlyRefreshed ? '#22543d' : '#822727',
                       border: 'none',
-                      cursor: 'pointer',
+                      cursor: card.monthlyRefreshed ? 'default' : 'pointer',
                       fontWeight: 500,
+                      opacity: card.monthlyRefreshed ? 0.8 : 1,
                     }}
                   >
                     {card.monthlyRefreshed ? '已登錄本月' : '未登錄本月'}
                   </button>
                   <button
-                    onClick={() => handleUpdateCard(card.id, { monthlyConsumed: !card.monthlyConsumed })}
+                    onClick={() => {
+                      if (!card.monthlyConsumed) {
+                        handleUpdateCard(card.id, { monthlyConsumed: true });
+                      }
+                    }}
+                    disabled={card.monthlyConsumed}
                     style={{
                       padding: '0.5rem',
                       background: card.monthlyConsumed ? '#c6f6d5' : '#fed7d7',
@@ -426,8 +437,9 @@ export default function Dashboard() {
                       textAlign: 'center',
                       color: card.monthlyConsumed ? '#22543d' : '#822727',
                       border: 'none',
-                      cursor: 'pointer',
+                      cursor: card.monthlyConsumed ? 'default' : 'pointer',
                       fontWeight: 500,
+                      opacity: card.monthlyConsumed ? 0.8 : 1,
                     }}
                   >
                     {card.monthlyConsumed ? '已完成自動加值' : '未完成自動加值'}
