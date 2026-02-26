@@ -106,6 +106,7 @@ export default function Dashboard() {
 
   const handleUpdateCard = async (id: number, updates: Partial<Card>) => {
     try {
+      console.log('Sending PATCH request to /api/cards/' + id, 'with payload:', updates);
       const res = await fetch(`/api/cards/${id}`, {
         method: 'PATCH',
         headers: {
@@ -115,6 +116,7 @@ export default function Dashboard() {
       });
 
       if (res.ok) {
+        console.log('PATCH response OK');
         const data = await res.json();
         setCards(cards.map((c) => (c.id === id ? data.card : c)));
       } else {

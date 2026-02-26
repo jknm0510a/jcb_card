@@ -1,11 +1,10 @@
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -16,21 +15,21 @@ model User {
 }
 
 model Card {
-  id              Int      @id @default(autoincrement())
-  bankName        String
-  cardName        String
-  balance         Int      @default(0)
-  monthlyRefreshed Boolean @default(false)
-  monthlyConsumed Boolean @default(false)
-  annualCount     Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  userId          Int
-  user            User     @relation(fields: [userId], references: [id])
+  id               Int      @id @default(autoincrement())
+  balance          Int      @default(0)
+  monthlyRefreshed Boolean  @default(false)
+  monthlyConsumed  Boolean  @default(false)
+  annualCount      Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  userId           Int
+  bankName         String
+  cardName         String
+  user             User     @relation(fields: [userId], references: [id])
 }
 
 model CardTemplate {
-  id        Int      @id @default(autoincrement())
-  bankName  String
-  cardName  String
+  id       Int    @id @default(autoincrement())
+  bankName String
+  cardName String
 }

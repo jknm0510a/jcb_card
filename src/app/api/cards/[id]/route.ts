@@ -53,6 +53,7 @@ export async function PATCH(
     try {
         const id = (await params).id;
         const body = await request.json();
+        console.log('PATCH API received body:', body);
 
         // Verify ownership
         const card = await prisma.card.findUnique({
@@ -72,6 +73,7 @@ export async function PATCH(
             data: {
                 ...(body.bankName !== undefined && { bankName: body.bankName }),
                 ...(body.cardName !== undefined && { cardName: body.cardName }),
+                ...(body.balance !== undefined && { balance: parseInt(body.balance) }),
                 ...(body.monthlyRefreshed !== undefined && { monthlyRefreshed: body.monthlyRefreshed }),
                 ...(body.monthlyConsumed !== undefined && { monthlyConsumed: body.monthlyConsumed }),
                 ...(body.annualCount !== undefined && { annualCount: body.annualCount }),
